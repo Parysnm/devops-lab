@@ -1,9 +1,9 @@
-# Vérifie si le rôle existe déjà
+# Vérifie si le rôle IAM existe déjà dans AWS
 data "aws_iam_role" "existing_lambda_role" {
   name = "lambda-sample-role"
 }
 
-# Vérifie si le rôle existe en utilisant `try()` pour éviter l'échec si le rôle n'existe pas encore
+# Vérifie si le rôle existe en utilisant `try()` pour éviter une erreur si le rôle n'existe pas encore
 locals {
   role_exists = try(data.aws_iam_role.existing_lambda_role.arn, null) != null
 }
@@ -19,12 +19,11 @@ resource "aws_iam_role" "lambda_exec" {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
       "Principal": {
         "Service": "lambda.amazonaws.com"
       },
-      "Effect": "Allow",
-      "Sid": ""
+      "Action": "sts:AssumeRole"
     }
   ]
 }
@@ -38,6 +37,8 @@ resource "aws_iam_policy_attachment" "lambda_policy" {
   name       = "${var.name}-policy-attachment"
   roles      = [aws_iam_role.lambda_exec[0].name]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+
+  depends_on = [aws_iam_role.lambda_exec]
 }
 
 # Vérifie si la fonction Lambda existe déjà
@@ -61,6 +62,7 @@ resource "aws_lambda_function" "this" {
   filename         = "${var.src_dir}/lambda.zip"
   source_code_hash = filebase64sha256("${var.src_dir}/lambda.zip")
 
+  # Vérifie si le rôle existe avant de l'utiliser
   role = local.role_exists ? data.aws_iam_role.existing_lambda_role.arn : aws_iam_role.lambda_exec[0].arn
 
   # Gère la mise à jour sans supprimer et recréer la Lambda
