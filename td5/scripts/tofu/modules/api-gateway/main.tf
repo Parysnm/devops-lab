@@ -22,8 +22,9 @@ resource "aws_api_gateway_integration" "lambda" {
   http_method             = aws_api_gateway_method.proxy.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = "${var.lambda_invoke_arn}/invocations"  # ✅ Correction ici
+  uri                     = "${var.lambda_invoke_arn}:$LATEST"  # ✅ Correction ici
 }
+
 
 
 resource "aws_api_gateway_stage" "prod" {

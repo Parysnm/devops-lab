@@ -1,4 +1,4 @@
-output "api_url" {
-  description = "L'URL de l'API Gateway"
-  value       = aws_api_gateway_deployment.this.invoke_url
+output "lambda_arn" {
+  description = "ARN d'invocation de la fonction Lambda"
+  value       = aws_lambda_function.this.invoke_arn  # ✅ Vérifie bien que c'est `invoke_arn`
 }
