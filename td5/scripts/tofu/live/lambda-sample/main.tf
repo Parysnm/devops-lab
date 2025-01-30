@@ -1,16 +1,16 @@
-provider "aws" {region ="us-east-2"}
+provider "aws" {
+  region = "us-east-2"
+}
 
 module "function" {
   source  = "github.com/Parysnm/devops-lab//td5/scripts/tofu/live/lambda-sample"
 
-  name    = "lambda-sample"
-  src_dir = "${path.module}/src"
-  runtime = "nodejs20.x"
-  handler = "index.handler"
-  memory_size = 128
-  timeout     = 5
+  name    = var.name
+  src_dir = var.src_dir
+  runtime = var.runtime
+  handler = var.handler
+  memory_size = var.memory_size
+  timeout     = var.timeout
 
-  environment_variables = {
-    NODE_ENV = "production"
-  }
+  environment_variables = var.environment_variables
 }

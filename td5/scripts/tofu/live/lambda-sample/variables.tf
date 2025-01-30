@@ -1,29 +1,35 @@
-variable "src_dir" {
-  description = "Chemin du dossier source"
+variable "name" {
+  description = "Nom de la fonction Lambda"
   type        = string
-  default     = "./src"
+  default     = "lambda-sample"
+}
+
+variable "src_dir" {
+  description = "Chemin du code source"
+  type        = string
+  default     = "${path.module}/src"
 }
 
 variable "runtime" {
-  description = "Runtime de la Lambda"
+  description = "Runtime utilisé par la Lambda"
   type        = string
   default     = "nodejs20.x"
 }
 
 variable "handler" {
-  description = "Handler de la Lambda"
+  description = "Handler de la fonction Lambda"
   type        = string
   default     = "index.handler"
 }
 
 variable "memory_size" {
-  description = "Mémoire allouée à la Lambda"
+  description = "Taille mémoire en MB"
   type        = number
   default     = 128
 }
 
 variable "timeout" {
-  description = "Délai d'exécution"
+  description = "Timeout en secondes"
   type        = number
   default     = 5
 }
