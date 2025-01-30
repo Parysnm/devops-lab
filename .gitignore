@@ -1,3 +1,5 @@
 .terraform/
 td5/scripts/tofu/live/ci-cd-permissions/terraform.tfstate
 td5/scripts/tofu/live/lambda-sample/.terraform.lock.hcl
+td5/scripts/tofu/live/lambda-sample/response.json
+td5/scripts/tofu/live/lambda-sample/terraform.tfstate.backup

@@ -41,3 +41,10 @@ variable "environment_variables" {
     NODE_ENV = "production"
   }
 }
+
+#API
+variable "api_gateway_name" {
+  description = "Nom de l'API Gateway"
+  type        = string
+  default     = "lambda-sample-api"
+}

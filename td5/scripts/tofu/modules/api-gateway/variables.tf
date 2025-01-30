@@ -3,19 +3,12 @@ variable "name" {
   type        = string
 }
 
-variable "stage_name" {
-  description = "Nom du stage de déploiement"
+variable "lambda_function_name" {
+  description = "Nom de la fonction Lambda à connecter"
   type        = string
-  default     = "dev"
 }
 
 variable "lambda_invoke_arn" {
-  description = "ARN de la fonction Lambda à invoquer"
+  description = "ARN d'invocation de la Lambda"
   type        = string
-}
-
-variable "routes" {  # ✅ Ajouté pour gérer les routes API
-  description = "Liste des routes de l'API Gateway"
-  type        = list(string)
-  default     = ["GET /"]
 }
