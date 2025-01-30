@@ -1,5 +1,6 @@
-output "api_url" {
-  description = "URL de l'API Gateway"
-  value       = aws_api_gateway_stage.prod.invoke_url
+output "lambda_arn" {
+  description = "ARN d'invocation de la fonction Lambda"
+  value       = "${aws_lambda_function.this.arn}/invocations"
 }
+
 

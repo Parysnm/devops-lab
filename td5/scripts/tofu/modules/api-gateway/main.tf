@@ -22,22 +22,23 @@ resource "aws_api_gateway_integration" "lambda" {
   http_method             = aws_api_gateway_method.proxy.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = "${var.lambda_invoke_arn}" # ✅ Correction ici (ne pas ajouter `/invocations`)
+  uri                     = var.lambda_invoke_arn  # ✅ Correction ici (pas `/invocations`)
 }
 
-# 🚀 Ajout du déploiement API Gateway (il était manquant)
+# ✅ Déploiement API Gateway (Supprimé la duplication)
 resource "aws_api_gateway_deployment" "this" {
   depends_on = [aws_api_gateway_integration.lambda]
   rest_api_id = aws_api_gateway_rest_api.this.id
 }
 
-# 🚀 Correction de `aws_api_gateway_stage.prod` pour utiliser le déploiement
+# ✅ Ajout du stage API Gateway (Correction)
 resource "aws_api_gateway_stage" "prod" {
   stage_name    = "prod"
   rest_api_id   = aws_api_gateway_rest_api.this.id
   deployment_id = aws_api_gateway_deployment.this.id
 }
 
+# ✅ Permission Lambda pour API Gateway
 resource "aws_lambda_permission" "apigw" {
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_name

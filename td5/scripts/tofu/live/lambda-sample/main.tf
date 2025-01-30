@@ -19,6 +19,7 @@ module "api_gateway" {
   source               = "github.com/Parysnm/devops-lab//td5/scripts/tofu/modules/api-gateway?ref=opentofu-tests"
   name                 = var.name
   lambda_function_name = module.function.lambda_function_name
-  lambda_invoke_arn    = module.function.lambda_arn  # ✅ Utilisation correcte
+  lambda_invoke_arn    = module.function.lambda_arn  # ✅ Vérifie que cette variable est correcte
 }
+
 
