@@ -22,3 +22,4 @@ module "api_gateway" {
   lambda_invoke_arn    = module.function.lambda_arn  # ✅ Vérifie bien que cette variable est correcte
 }
 
+
