@@ -1,28 +1,26 @@
 provider "aws" {
-  region = "us-east-2"
+  region = "us-east-2" # Replace with your desired region
 }
 
-module "function" {
-  source = "../../modules/lambda"  # Utilisation du chemin relatif vers le module lambda
-
-  name     = var.name
-  src_dir  = "${path.module}/src"
-  runtime  = "nodejs20.x"
-  handler  = "index.handler"
-
-  memory_size = 128
-  timeout     = 5
-
-  environment_variables = {
-    NODE_ENV = "production"
-  }
+module "oidc_provider" {
+  source       = "github.com/Parysnm/devops-lab//td5/scripts/tofu/modules/github-aws-oidc"
+  provider_url = "https://token.actions.githubusercontent.com"
 }
+module "iam_roles" {
+  source = "github.com/Parysnm/devops-lab//td5/scripts/tofu/modules/gh-actions-iam-roles"
 
-module "gateway" {
-  source = "../../modules/api-gateway"  # Utilisation du chemin relatif vers le module api-gateway
+  name              = "lambda-sample"
+  oidc_provider_arn = module.oidc_provider.oidc_provider_arn
 
-  name              = var.name
-  function_arn      = module.function.function_arn
-  api_gateway_routes = ["GET /"]
+  enable_iam_role_for_testing = true
+  enable_iam_role_for_plan    = true  # Add for plan role
+  enable_iam_role_for_apply   = true  # Add for apply role
+
+  # Remplace avec ton propre repo GitHub
+  github_repo = "Parysnm/devops-lab"
+
+  # Remplace avec tes valeurs AWS pour la gestion d'état OpenTofu
+  tofu_state_bucket         = "fundamentals-of-devops-tofu-state-parys-alexandre"
+  tofu_state_dynamodb_table = "fundamentals-of-devops-tofu-state-parys-alexandre"
 }
 
