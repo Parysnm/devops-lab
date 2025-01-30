@@ -3,9 +3,14 @@ data "aws_iam_role" "existing_lambda_role" {
   name = "lambda-sample-role"
 }
 
+# Vérifie si le rôle existe en utilisant `try()` pour éviter l'échec si le rôle n'existe pas encore
+locals {
+  role_exists = try(data.aws_iam_role.existing_lambda_role.arn, null) != null
+}
+
 # Si le rôle n'existe pas, Terraform va le créer
 resource "aws_iam_role" "lambda_exec" {
-  count = try(length(data.aws_iam_role.existing_lambda_role.name), 0) > 0 ? 0 : 1
+  count = local.role_exists ? 0 : 1  # Crée le rôle uniquement s'il n'existe pas
 
   name = "lambda-sample-role"
 
@@ -26,9 +31,9 @@ resource "aws_iam_role" "lambda_exec" {
 EOF
 }
 
-# Attache la politique AWS de base pour Lambda
+# Attache la politique AWS de base pour Lambda uniquement si le rôle a été créé
 resource "aws_iam_policy_attachment" "lambda_policy" {
-  count = try(length(data.aws_iam_role.existing_lambda_role.name), 0) > 0 ? 0 : 1
+  count = local.role_exists ? 0 : 1
 
   name       = "${var.name}-policy-attachment"
   roles      = [aws_iam_role.lambda_exec[0].name]
@@ -56,7 +61,7 @@ resource "aws_lambda_function" "this" {
   filename         = "${var.src_dir}/lambda.zip"
   source_code_hash = filebase64sha256("${var.src_dir}/lambda.zip")
 
-  role = try(length(data.aws_iam_role.existing_lambda_role.name), 0) > 0 ? data.aws_iam_role.existing_lambda_role.arn : aws_iam_role.lambda_exec[0].arn
+  role = local.role_exists ? data.aws_iam_role.existing_lambda_role.arn : aws_iam_role.lambda_exec[0].arn
 
   # Gère la mise à jour sans supprimer et recréer la Lambda
   lifecycle {
