@@ -22,8 +22,9 @@ resource "aws_api_gateway_integration" "lambda" {
   http_method             = aws_api_gateway_method.proxy.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = var.lambda_invoke_arn  # ✅ Correction ici (pas `/invocations`)
+  uri                     = var.lambda_invoke_arn  # ✅ Correction ici
 }
+
 
 # ✅ Déploiement API Gateway (Supprimé la duplication)
 resource "aws_api_gateway_deployment" "this" {
