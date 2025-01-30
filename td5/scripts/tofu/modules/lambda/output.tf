@@ -5,7 +5,7 @@ output "lambda_function_name" {
 
 output "lambda_arn" {
   description = "ARN d'invocation de la fonction Lambda"
-  value       = "${aws_lambda_function.this.arn}/invocations"  # ✅ Correction ici
+  value       = "${aws_lambda_function.this.arn}/invocations"
 }
 
 
