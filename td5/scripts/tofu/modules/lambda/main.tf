@@ -5,7 +5,7 @@ data "aws_iam_role" "existing_lambda_role" {
 
 # Si le rôle n'existe pas, Terraform va le créer
 resource "aws_iam_role" "lambda_exec" {
-  count = length(data.aws_iam_role.existing_lambda_role.name) > 0 ? 0 : 1
+  count = try(length(data.aws_iam_role.existing_lambda_role.name), 0) > 0 ? 0 : 1
 
   name = "lambda-sample-role"
 
@@ -28,7 +28,7 @@ EOF
 
 # Attache la politique AWS de base pour Lambda
 resource "aws_iam_policy_attachment" "lambda_policy" {
-  count = length(data.aws_iam_role.existing_lambda_role.name) > 0 ? 0 : 1
+  count = try(length(data.aws_iam_role.existing_lambda_role.name), 0) > 0 ? 0 : 1
 
   name       = "${var.name}-policy-attachment"
   roles      = [aws_iam_role.lambda_exec[0].name]
@@ -56,11 +56,13 @@ resource "aws_lambda_function" "this" {
   filename         = "${var.src_dir}/lambda.zip"
   source_code_hash = filebase64sha256("${var.src_dir}/lambda.zip")
 
-  role = length(data.aws_iam_role.existing_lambda_role.name) > 0 ? data.aws_iam_role.existing_lambda_role.arn : aws_iam_role.lambda_exec[0].arn
+  role = try(length(data.aws_iam_role.existing_lambda_role.name), 0) > 0 ? data.aws_iam_role.existing_lambda_role.arn : aws_iam_role.lambda_exec[0].arn
 
   # Gère la mise à jour sans supprimer et recréer la Lambda
   lifecycle {
     create_before_destroy = true
     ignore_changes        = [function_name, role]
   }
+
+  depends_on = [aws_iam_role.lambda_exec]
 }
