@@ -1,25 +1,13 @@
-resource "aws_lambda_function" "this" {
-  function_name = var.name
-  runtime       = var.runtime
-  handler       = var.handler
-
-  memory_size = var.memory_size
-  timeout     = var.timeout
-
-  environment {
-    variables = var.environment_variables
-  }
-
-  # Spécifie l'archive ZIP du code source
-  filename         = "${var.src_dir}/lambda.zip"
-  source_code_hash = filebase64sha256("${var.src_dir}/lambda.zip")
-
-  role = aws_iam_role.lambda_exec.arn  # Lien avec le rôle IAM
+# Vérifie si le rôle existe déjà
+data "aws_iam_role" "existing_lambda_role" {
+  name = "lambda-sample-role"
 }
 
-# Crée le rôle IAM nécessaire pour exécuter la Lambda
+# Si le rôle n'existe pas, Terraform va le créer
 resource "aws_iam_role" "lambda_exec" {
-  name = "${var.name}-role"
+  count = length(data.aws_iam_role.existing_lambda_role.name) > 0 ? 0 : 1
+
+  name = "lambda-sample-role"
 
   assume_role_policy = <<EOF
 {
@@ -38,9 +26,21 @@ resource "aws_iam_role" "lambda_exec" {
 EOF
 }
 
-# Attache la politique AWS de base pour Lambda
-resource "aws_iam_policy_attachment" "lambda_policy" {
-  name       = "${var.name}-policy-attachment"
-  roles      = [aws_iam_role.lambda_exec.name]
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+# La fonction Lambda utilise soit le rôle existant, soit celui qui vient d’être créé
+resource "aws_lambda_function" "this" {
+  function_name = var.name
+  runtime       = var.runtime
+  handler       = var.handler
+
+  memory_size = var.memory_size
+  timeout     = var.timeout
+
+  environment {
+    variables = var.environment_variables
+  }
+
+  filename         = "${var.src_dir}/lambda.zip"
+  source_code_hash = filebase64sha256("${var.src_dir}/lambda.zip")
+
+  role = length(data.aws_iam_role.existing_lambda_role.name) > 0 ? data.aws_iam_role.existing_lambda_role.arn : aws_iam_role.lambda_exec[0].arn
 }
