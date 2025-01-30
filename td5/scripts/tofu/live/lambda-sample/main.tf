@@ -2,8 +2,8 @@ provider "aws" {
   region = "us-east-2"  # Remplace par ta région AWS
 }
 
-module "lambda_function" {
-  source  = "github.com/Parysnm/devops-lab.git//td5/scripts/tofu/live/lambda-sample?ref=opentofu-tests"
+mmodule "lambda_function" {
+  source  = "github.com/Parysnm/devops-lab//td5/scripts/tofu/live/lambda-sample"
 
   name    = "lambda-sample"
   src_dir = "${path.module}/src"
@@ -16,3 +16,4 @@ module "lambda_function" {
     NODE_ENV = "production"
   }
 }
+
