@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-east-2"  # Remplace par ta région AWS
 }
 
-mmodule "lambda_function" {
+module "lambda_function" {
   source  = "github.com/Parysnm/devops-lab//td5/scripts/tofu/live/lambda-sample"
 
   name    = "lambda-sample"
