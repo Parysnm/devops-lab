@@ -22,14 +22,16 @@ resource "aws_api_gateway_integration" "lambda" {
   http_method             = aws_api_gateway_method.proxy.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = var.lambda_invoke_arn
+  uri                     = "${var.lambda_invoke_arn}/invocations"  # ✅ Correction ici
 }
 
-resource "aws_api_gateway_deployment" "this" {
-  depends_on = [aws_api_gateway_integration.lambda]
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  stage_name  = "prod"
+
+resource "aws_api_gateway_stage" "prod" {
+  stage_name    = "prod"
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  deployment_id = aws_api_gateway_deployment.this.id
 }
+
 
 resource "aws_lambda_permission" "apigw" {
   action        = "lambda:InvokeFunction"
