@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "function" {
-  source = "github.com/Parysnm/devops-lab//td5/scripts/tofu/modules/lambda" # ✅ Chemin spécifique au module Lambda
+  source = "github.com/Parysnm/devops-lab//td5/scripts/tofu/modules/lambda?ref=opentofu-tests" # ✅ Correction ici
 
   name                = var.name
   src_dir             = var.src_dir
