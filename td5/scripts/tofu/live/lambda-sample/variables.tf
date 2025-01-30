@@ -7,7 +7,7 @@ variable "name" {
 variable "src_dir" {
   description = "Chemin du code source"
   type        = string
-  default     = "${path.module}/src"
+  default     = "./src"
 }
 
 variable "runtime" {
