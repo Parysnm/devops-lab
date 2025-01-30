@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "lambda_function" {
-  source  = "github.com/Parysnm/devops-lab//td5/scripts/tofu/live/lambda-sample"
+  source  = "github.com/Parysnm/devops-lab.git//td5/scripts/tofu/live/lambda-sample?ref=opentofu-tests"
 
   name    = "lambda-sample"
   src_dir = "${path.module}/src"
