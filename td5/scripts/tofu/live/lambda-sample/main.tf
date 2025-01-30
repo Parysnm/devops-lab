@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "function" {
-  source = "git::https://github.com/Parysnm/devops-lab.git//td5/scripts/tofu/modules/lambda"
+  source = "../../modules/lambda"  # Utilisation du chemin relatif vers le module lambda
 
   name     = var.name
   src_dir  = "${path.module}/src"
@@ -19,7 +19,7 @@ module "function" {
 }
 
 module "gateway" {
-  source = "git::https://github.com/Parysnm/devops-lab.git//td5/scripts/tofu/modules/api-gateway"
+  source = "../../modules/api-gateway"  # Utilisation du chemin relatif vers le module api-gateway
 
   name              = var.name
   function_arn      = module.function.function_arn
