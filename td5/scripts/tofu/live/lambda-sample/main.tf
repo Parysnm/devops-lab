@@ -1,4 +1,6 @@
-module "lambda_function" {
+provider "aws" {region ="us-east-2"}
+
+module "function" {
   source  = "github.com/Parysnm/devops-lab//td5/scripts/tofu/live/lambda-sample"
 
   name    = "lambda-sample"
