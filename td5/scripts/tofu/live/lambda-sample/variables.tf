@@ -1,5 +1,7 @@
-variable "name" {
-  description = "The base name for the function and all other resources"
-  type        = string
-  default     = "lambda-sample"
+variable "environment_variables" {
+  description = "Variables d'environnement pour la Lambda"
+  type        = map(string)
+  default = {
+    NODE_ENV = "production"
+  }
 }
