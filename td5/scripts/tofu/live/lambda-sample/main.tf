@@ -25,4 +25,4 @@ module "function" {
  # name = var.name
   #function_arn       = module.function.function_arn
   #api_gateway_routes = ["GET /"]
-}
+#}
