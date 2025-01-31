@@ -14,4 +14,3 @@ jobs:
       - name: Run tests
         working-directory: td5/scripts/sample-app
         run: npm test
-
