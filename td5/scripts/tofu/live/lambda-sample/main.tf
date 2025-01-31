@@ -20,7 +20,8 @@ module "function" {
 }
 #ajout
 module "gateway" {
-  source = "github.com/Parysnm/devops-lab//td5/tofu/modules/api-gateway"
+  source = "../../modules/api-gateway"
+
 
   name = var.name
   function_arn       = module.function.function_arn
