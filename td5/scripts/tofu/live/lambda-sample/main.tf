@@ -18,7 +18,7 @@ module "function" {
     NODE_ENV = "production"
   }
 }
-
+#ajout
 module "gateway" {
   source = "github.com/Parysnm/devops-lab//td5/tofu/modules/api-gateway"
 
