@@ -24,7 +24,7 @@ jobs:
           files: "td5/scripts/tofu/live/**"  # Surveille uniquement le code OpenTofu
 
   plan:
-    needs: detect-changes  # ✅ Attend que l'étape précédente ait détecté des changements
+    needs: detect-changes  # Attend que l'étape précédente ait détecté des changements
     if: needs.detect-changes.outputs.matrix != '[]'  # 🔄 N'exécute le job que si des fichiers ont changé
     runs-on: ubuntu-latest
     strategy:
@@ -41,7 +41,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::145023091058:role/lambda-sample-plan  # 🎟️ Assume le rôle AWS pour exécuter Tofu
+          role-to-assume: arn:aws:iam::145023091058:role/lambda-sample-plan  # Assume le rôle AWS pour exécuter Tofu
           role-session-name: plan-${{ github.run_number }}-${{ github.actor }}
           aws-region: us-east-2
 
