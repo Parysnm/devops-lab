@@ -7,7 +7,7 @@ jobs:
   detect-changes:  #  Job pour détecter les dossiers modifiés
     runs-on: ubuntu-latest
     outputs:
-      folders: ${{ steps.changed-files.outputs.all_modified_files }}  #  Stocke les dossiers modifiés en output
+      folders: ${{ steps.changed-files.outputs.all_modified_files && steps.changed-files.outputs.all_modified_files != '[]' && steps.changed-files.outputs.all_modified_files != '' && format('{{0}}', steps.changed-files.outputs.all_modified_files) }}  #  Stocke les dossiers modifiés en output
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,7 +16,7 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@v45  #  Utilise tj-actions pour identifier les fichiers modifiés
+        uses: tj-actions/changed-files@v45
         with:
           dir_names: true
           escape_json: true
@@ -25,10 +25,10 @@ jobs:
 
   apply:
     needs: detect-changes  # Attente de la détection des changements avant d'exécuter ce job
-    if: ${{ needs.detect-changes.outputs.folders != '[]' }}  # Vérifie si des dossiers ont changé
+    if: ${{ needs.detect-changes.outputs.folders != '[]' && needs.detect-changes.outputs.folders != '' }}  # Vérifie si la liste des dossiers n'est pas vide
     strategy:
       matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.folders) }} # Exécute chaque dossier en parallèle
+        folder: ${{ fromJson(needs.detect-changes.outputs.folders || '[]') }}  # Transforme en JSON valide et évite les erreurs
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -49,7 +49,7 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Run Tofu Apply
-        working-directory: ${{ matrix.folder }}  #Exécute tofu apply dans chaque dossier OpenTofu en parallèle
+        working-directory: ${{ matrix.folder }}
         run: |
           tofu init -no-color -input=false
           tofu apply -no-color -input=false -auto-approve
@@ -70,3 +70,4 @@ jobs:
           body: |
             ## ${{ env.RESULT_EMOJI }} `tofu apply` output in ${{ matrix.folder }}
             ```${{ steps.apply.outputs.stdout }}```
+
