@@ -7,7 +7,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      folders: ${{ steps.changed-files.outputs.all_modified_files != '' && steps.changed-files.outputs.all_modified_files != '[]' && format('{0}', steps.changed-files.outputs.all_modified_files) || '[]' }}
+      folders: ${{ steps.changed-files.outputs.all_modified_files && steps.changed-files.outputs.all_modified_files != '[]' && steps.changed-files.outputs.all_modified_files != '' && format('{0}', steps.changed-files.outputs.all_modified_files) || '[]' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,7 +19,7 @@ jobs:
         uses: tj-actions/changed-files@v45
         with:
           dir_names: true
-          escape_json: true
+          escape_json: false  # On désactive escape_json pour éviter de casser la structure
           json: true
           files: "td5/"
 
@@ -28,7 +28,7 @@ jobs:
     if: ${{ needs.detect-changes.outputs.folders != '[]' && needs.detect-changes.outputs.folders != '' }}
     strategy:
       matrix:
-        folder: ${{ fromJson(format('{0}', needs.detect-changes.outputs.folders)) }}  # Correction du JSON
+        folder: ${{ fromJson(needs.detect-changes.outputs.folders) }}  # Correction du JSON
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
