@@ -1,67 +1,50 @@
 name: Tofu Plan
 
-# 🔹 Déclenchement automatique lorsque quelqu'un crée ou met à jour un Pull Request
 on:
   pull_request:
-    branches: ["main"]  # Surveiller uniquement la branche principale
+    branches: ["main"]
     paths:
-      - "td5/scripts/tofu/live/**"  # 🔍 Surveiller uniquement les fichiers OpenTofu
+      - "td5/**"  # Détecte tous les fichiers modifiés sous td5/, incluant tous les dossiers OpenTofu
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.changed-files.outputs.all_changed_files }}  # 📤 Stocke la liste des dossiers modifiés
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2  # 📥 Récupère le code source
-
-      - name: Get changed folders
-        id: changed-files
-        uses: tj-actions/changed-files@v44  # 🔍 Détecte les dossiers modifiés
-        with:
-          dir_names: "true"
-          files: "td5/scripts/tofu/live/**"  # Surveille uniquement le code OpenTofu
-
   plan:
-    needs: detect-changes  # Attend que l'étape précédente ait détecté des changements
-    if: needs.detect-changes.outputs.matrix != '[]'  # 🔄 N'exécute le job que si des fichiers ont changé
+    name: "Tofu Plan"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}  # ⚡ Exécute en parallèle pour chaque dossier modifié
     permissions:
       pull-requests: write
       id-token: write
       contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
-      - name: Configure AWS credentials
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Identify changed OpenTofu directories
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          dir_names: "true"
+          path: "td5/"
+          separator: ","
+
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::145023091058:role/lambda-sample-plan  # Assume le rôle AWS pour exécuter Tofu
-          role-session-name: plan-${{ github.run_number }}-${{ github.actor }}
+          role-to-assume: ${{ secrets.PLAN_ROLE_ARN }}
           aws-region: us-east-2
 
-      - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1  # 🔧 Installe OpenTofu
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v1
 
-      - name: Run tofu plan
-        id: plan
-        working-directory: ${{ matrix.folder }}  # 📂 Exécute `tofu plan` dans chaque dossier détecté
-        run: |
-          tofu init -no-color -input=false
-          tofu plan -no-color -input=false -lock=false
-
-      - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@v4  # 📝 Ajoute un commentaire sur le PR avec le résultat du plan
-        if: always()
+      - name: Run Tofu Plan for each changed directory
+        if: steps.changed-files.outputs.all_modified_files != ''
         env:
-          RESULT_EMOJI: ${{ steps.plan.outcome == 'success' && '✅' || '⚠ ' }}
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ## ${{ env.RESULT_EMOJI }} `tofu plan` output for `${{ matrix.folder }}`
-            ```${{ steps.plan.outputs.stdout }}```
+          CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_modified_files }}
+        run: |
+          for folder in $(echo $CHANGED_FOLDERS | tr ',' '\n'); do
+            echo "Running Tofu Plan for $folder"
+            cd $folder
+            tofu init -no-color -input=false
+            tofu plan -no-color -input=false -lock=false
+            cd - # Retour à la racine
+          done

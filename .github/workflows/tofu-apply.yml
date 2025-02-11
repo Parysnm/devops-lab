@@ -1,73 +1,50 @@
 name: Tofu Apply
 
-# 🔹 Déclenchement automatique lors d'un push sur main
 on:
   push:
     branches: ["main"]
     paths:
-      - "td5/scripts/tofu/live/**"  # 🔍 Surveille uniquement les fichiers OpenTofu
+      - "td5/**"  # Détecte tous les fichiers modifiés sous td5/, incluant tous les dossiers OpenTofu
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.changed-files.outputs.all_changed_files }}  # 📤 Stocke la liste des dossiers modifiés
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2  # 📥 Récupère le code source
-
-      - name: Get changed folders
-        id: changed-files
-        uses: tj-actions/changed-files@v44  # 🔍 Détecte les dossiers modifiés
-        with:
-          dir_names: "true"
-          files: "td5/scripts/tofu/live/**"  # Surveille uniquement le code OpenTofu
-
   apply:
-    needs: detect-changes  # ✅ Attend que l'étape précédente ait détecté des changements
-    if: needs.detect-changes.outputs.matrix != '[]'  # 🔄 N'exécute le job que si des fichiers ont changé
+    name: "Tofu Apply"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}  # ⚡ Exécute en parallèle pour chaque dossier modifié
     permissions:
       pull-requests: write
       id-token: write
       contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
-      - name: Configure AWS credentials
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Identify changed OpenTofu directories
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          dir_names: "true"
+          path: "td5/"
+          separator: ","
+
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::145023091058:role/lambda-sample-apply  #  Assume le rôle AWS pour exécuter Tofu
-          role-session-name: apply-${{ github.run_number }}-${{ github.actor }}
+          role-to-assume: ${{ secrets.APPLY_ROLE_ARN }}
           aws-region: us-east-2
 
-      - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1  # 🔧 Installe OpenTofu
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v1
 
-      - name: Run tofu apply
-        id: apply
-        working-directory: ${{ matrix.folder }}  # 📂 Exécute `tofu apply` dans chaque dossier détecté
-        run: |
-          tofu init -no-color -input=false
-          tofu apply -no-color -input=false -lock-timeout=60m -auto-approve
-
-      - name: Find current PR
-        uses: jwalton/gh-find-current-pr@master  # 🔍 Trouve le Pull Request correspondant
-        id: find_pr
-        with:
-          state: all
-
-      - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@v4  # 📝 Ajoute un commentaire sur le PR avec le résultat de l'apply
-        if: steps.find_pr.outputs.number
+      - name: Run Tofu Apply for each changed directory
+        if: steps.changed-files.outputs.all_modified_files != ''
         env:
-          RESULT_EMOJI: ${{ steps.apply.outcome == 'success' && '✅' || '⚠ ' }}
-        with:
-          issue-number: ${{ steps.find_pr.outputs.number }}
-          body: |
-            ## ${{ env.RESULT_EMOJI }} `tofu apply` output for `${{ matrix.folder }}`
-            ```${{ steps.apply.outputs.stdout }}```
+          CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_modified_files }}
+        run: |
+          for folder in $(echo $CHANGED_FOLDERS | tr ',' '\n'); do
+            echo "Running Tofu Apply for $folder"
+            cd $folder
+            tofu init -no-color -input=false
+            tofu apply -no-color -input=false -lock-timeout=60m -auto-approve
+            cd - # Retour à la racine
+          done
