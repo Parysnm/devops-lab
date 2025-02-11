@@ -34,7 +34,7 @@ jobs:
       - name: Run Tofu Plan
         id: plan
         run: |
-          for dir in $(echo "${{ steps.changed-files.outputs.all_modified_files }}" | tr ' ' '\n' | grep 'td5/scripts/tofu/live/' | xargs -n1 dirname | sort -u); do
+          for dir in $(echo "${{ steps.changed-files.outputs.all_modified_files }}" | tr ' ' '\n' | grep 'td5/' | xargs -n1 dirname | sort -u); do
             if [ -d "$dir" ]; then
               echo "Running tofu plan in $dir"
               cd $dir
@@ -56,3 +56,4 @@ jobs:
           body: |
             ## ${{ env.RESULT_EMOJI }} `tofu plan` output
             ```${{ steps.plan.outputs.stdout }}```
+

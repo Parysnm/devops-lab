@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:GET"
+            ],
+            "Resource": "arn:aws:apigateway:us-east-2::/apis/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListEntitiesForPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetOpenIDConnectProvider"
+            ],
+            "Resource": "arn:aws:iam::145023091058:oidc-provider/token.actions.githubusercontent.com"
+        }
+    ]
+}

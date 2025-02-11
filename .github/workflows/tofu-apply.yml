@@ -34,7 +34,7 @@ jobs:
       - name: Run Tofu Apply
         id: apply
         run: |
-          for dir in $(echo "${{ steps.changed-files.outputs.all_modified_files }}" | tr ' ' '\n' | grep 'td5/scripts/tofu/live/' | xargs -n1 dirname | sort -u); do
+          for dir in $(echo "${{ steps.changed-files.outputs.all_modified_files }}" | tr ' ' '\n' | grep 'td5/' | xargs -n1 dirname | sort -u); do
             if [ -d "$dir" ]; then
               echo "Running tofu apply in $dir"
               cd $dir
