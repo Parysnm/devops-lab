@@ -4,8 +4,31 @@ on:
     branches: ["main"]
 
 jobs:
+  detect-changes:  #  Job pour détecter les dossiers modifiés
+    runs-on: ubuntu-latest
+    outputs:
+      folders: ${{ steps.changed-files.outputs.all_modified_files && steps.changed-files.outputs.all_modified_files != '[]' && steps.changed-files.outputs.all_modified_files != '' && format('{{0}}', steps.changed-files.outputs.all_modified_files) }}  #  Stocke les dossiers modifiés en output
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          dir_names: true
+          escape_json: true
+          json: true
+          files: "td5/"
+
   apply:
-    name: "Tofu Apply"
+    needs: detect-changes  # Attente de la détection des changements avant d'exécuter ce job
+    if: ${{ needs.detect-changes.outputs.folders != '[]' && needs.detect-changes.outputs.folders != '' }}  # Vérifie si la liste des dossiers n'est pas vide
+    strategy:
+      matrix:
+        folder: ${{ fromJson(needs.detect-changes.outputs.folders || '[]') }}  # Transforme en JSON valide et évite les erreurs
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -14,12 +37,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Récupère tout l'historique pour détecter les fichiers modifiés
-
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v45
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -32,19 +49,10 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Run Tofu Apply
-        id: apply
+        working-directory: ${{ matrix.folder }}
         run: |
-          for dir in $(echo "${{ steps.changed-files.outputs.all_modified_files }}" | tr ' ' '\n' | grep 'td5/' | xargs -n1 dirname | sort -u); do
-            if [ -d "$dir" ]; then
-              echo "Running tofu apply in $dir"
-              cd $dir
-              tofu init -no-color -input=false
-              tofu apply -no-color -input=false -auto-approve
-              cd -
-            else
-              echo "Skipping $dir (not a directory)"
-            fi
-          done
+          tofu init -no-color -input=false
+          tofu apply -no-color -input=false -auto-approve
 
       - name: Find current PR
         uses: jwalton/gh-find-current-pr@master
@@ -60,5 +68,6 @@ jobs:
         with:
           issue-number: ${{ steps.find_pr.outputs.number }}
           body: |
-            ## ${{ env.RESULT_EMOJI }} `tofu apply` output
+            ## ${{ env.RESULT_EMOJI }} `tofu apply` output in ${{ matrix.folder }}
             ```${{ steps.apply.outputs.stdout }}```
+
