@@ -47,6 +47,6 @@ jobs:
             tofu plan -no-color -input=false -lock=false \
               -var "name=lambda-sample" \
               -var "function_arn=arn:aws:lambda:us-east-2:145023091058:function:lambda-sample" \
-              -var "api_gateway_routes=[\"GET /\"]"
+              -var 'api_gateway_routes=["GET /"]'
             cd - # Retour à la racine
           done
