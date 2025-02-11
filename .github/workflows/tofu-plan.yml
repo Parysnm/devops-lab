@@ -4,10 +4,10 @@ on:
     branches: ["main"]
 
 jobs:
-  detect-changes:  # Nouveau job pour détecter les dossiers modifiés
+  detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      folders: ${{ steps.changed-files.outputs.all_modified_files }}  #  Stocke les dossiers modifiés en output
+      folders: ${{ steps.changed-files.outputs.all_modified_files && steps.changed-files.outputs.all_modified_files != '[]' && steps.changed-files.outputs.all_modified_files != '' && format('{{0}}', steps.changed-files.outputs.all_modified_files) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,7 +16,7 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@v45  # Utilise tj-actions pour lister les fichiers modifiés
+        uses: tj-actions/changed-files@v45
         with:
           dir_names: true
           escape_json: true
@@ -24,11 +24,11 @@ jobs:
           files: "td5/"
 
   plan:
-    needs: detect-changes  # Attente de la détection des changements avant d'exécuter ce job
-    if: ${{ needs.detect-changes.outputs.folders != '[]' }}  #Vérifie si des dossiers ont changé
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.folders != '[]' && needs.detect-changes.outputs.folders != '' }}
     strategy:
       matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.folders) }}  # Exécute chaque dossier en parallèle
+        folder: ${{ fromJson(needs.detect-changes.outputs.folders || '[""]') }}  # Correction du JSON
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -49,7 +49,7 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Run Tofu Plan
-        working-directory: ${{ matrix.folder }}  # MOO: Exécute tofu plan dans chaque dossier OpenTofu en parallèle
+        working-directory: ${{ matrix.folder }}
         run: |
           tofu init -no-color -input=false
           tofu plan -no-color -input=false -lock=false
