@@ -42,8 +42,7 @@ jobs:
           CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_modified_files }}
         run: |
           for folder in $(echo $CHANGED_FOLDERS | tr ',' '\n'); do
-            echo "Running Tofu Plan for $folder"
-            cd $folder
+            cd "td5/$folder"
             tofu init -no-color -input=false
             tofu plan -no-color -input=false -lock=false
             cd - # Retour à la racine
