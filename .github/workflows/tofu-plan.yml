@@ -7,7 +7,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      folders: ${{ steps.changed-files.outputs.all_modified_files != '' && steps.changed-files.outputs.all_modified_files != '[]' && format('[{0}]', steps.changed-files.outputs.all_modified_files) || '[]' }}
+      folders: ${{ steps.changed-files.outputs.all_modified_files != '' && steps.changed-files.outputs.all_modified_files != '[]' && format('{0}', steps.changed-files.outputs.all_modified_files) || '[]' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
     if: ${{ needs.detect-changes.outputs.folders != '[]' && needs.detect-changes.outputs.folders != '' }}
     strategy:
       matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.folders) || [] }}  # Correction pour éviter les erreurs JSON
+        folder: ${{ fromJson(format('{0}', needs.detect-changes.outputs.folders)) }}  # Correction du JSON
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
