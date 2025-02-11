@@ -1,10 +1,8 @@
 name: Tofu Plan
-
 on:
   pull_request:
     branches: ["main"]
-    paths:
-      - "td5/**"  # Détecte tous les fichiers modifiés sous td5/, incluant tous les dossiers OpenTofu
+    paths: ["td5/scripts/tofu/live/lambda-sample/**"]
 
 jobs:
   plan:
@@ -14,39 +12,26 @@ jobs:
       pull-requests: write
       id-token: write
       contents: read
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Identify changed OpenTofu directories
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          dir_names: "true"
-          path: "td5/"
-          separator: ","
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+      - uses: actions/checkout@v2
+      - uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets.PLAN_ROLE_ARN }}
+          role-session-name: plan-${{ github.run_number }}-${{ github.actor }}
           aws-region: us-east-2
-
-      - name: Install OpenTofu
-        uses: opentofu/setup-opentofu@v1
-
-      - name: Run Tofu Plan for each changed directory
-        if: steps.changed-files.outputs.all_modified_files != ''
-        env:
-          CHANGED_FOLDERS: ${{ steps.changed-files.outputs.all_modified_files }}
+      - uses: opentofu/setup-opentofu@v1
+      - name: tofu plan
+        id: plan
+        working-directory: td5/scripts/tofu/live/lambda-sample
         run: |
-          for folder in $(echo $CHANGED_FOLDERS | tr ',' '\n'); do
-            cd "td5/$folder"
-            tofu init -no-color -input=false
-            tofu plan -no-color -input=false -lock=false \
-              -var "name=lambda-sample" \
-              -var "function_arn=arn:aws:lambda:us-east-2:145023091058:function:lambda-sample" \
-              -var 'api_gateway_routes=["GET /"]'
-            cd - # Retour à la racine
-          done
+          tofu init -no-color -input=false
+          tofu plan -no-color -input=false -lock=false
+      - uses: peter-evans/create-or-update-comment@v4
+        if: always()
+        env:
+          RESULT_EMOJI: ${{ steps.plan.outcome == 'success' && '✅' || '⚠ ' }}
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## ${{ env.RESULT_EMOJI }} `tofu plan` output
+            ```${{ steps.plan.outputs.stdout }}```
